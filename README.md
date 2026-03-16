@@ -93,5 +93,6 @@ applied. The full dataset is available in the /data folder.
 
 ## Contact
 
-GitHub: jokoroma47  
-LinkedIn: [your LinkedIn URL]
+**Portfolio:** [jokoroma47.github.io](https://jokoroma47.github.io)
+**GitHub:** [@jokoroma47](https://github.com/jokoroma47)
+**LinkedIn:** [linkedin.com/in/jeremiah-okoroma-724908116](https://linkedin.com/in/jeremiah-okoroma-724908116)
