@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Card Fraud Intelligence | Data Analytics Portfolio</title>
+<meta name="description" content="Interactive fraud analytics dashboard — 500,000 transactions, 8 countries, Jan 2024 to Sep 2025. Built with HTML5 and Chart.js.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --navy:#1a1a2e;--blue:#378ADD;--acc:#185FA5;--red:#E24B4A;--green:#3B6D11;
+    --gold:#BA7517;--orange:#EF9F27;--purple:#534AB7;
+    --bg:#F4F6F9;--card:#FFFFFF;--border:#DDE3EC;
+    --text:#1C2833;--text2:#566573;--text3:#AAB7C4;
+    --radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.07);
+  }
+  @media(prefers-color-scheme:dark){
+    :root{--bg:#0F172A;--card:#1E293B;--border:#334155;--text:#F1F5F9;--text2:#94A3B8;--text3:#475569;}
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+
+  .header{background:var(--navy);padding:0}
+  .header-inner{max-width:1400px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .header-brand{display:flex;align-items:center;gap:14px}
+  .header-icon{width:42px;height:42px;background:rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .header-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .header-title{color:#fff;font-size:17px;font-weight:600;letter-spacing:-0.01em}
+  .header-sub{color:#8892a4;font-size:11px;margin-top:2px}
+  .header-badges{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:500;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7)}
+
+  .nav-bar{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+  .nav-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:2px;overflow-x:auto}
+  .nav-btn{padding:12px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;margin-bottom:-1px}
+  .nav-btn:hover{color:var(--blue);border-bottom-color:var(--blue)}
+  .nav-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+  .main{max-width:1400px;margin:0 auto;padding:20px 24px}
+  .page{display:none}.page.active{display:block}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+  @media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+  @media(max-width:1100px){.grid3{grid-template-columns:1fr 1fr}.grid4{grid-template-columns:repeat(2,1fr)}}
+  .full{grid-column:1/-1}.mb16{margin-bottom:16px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text2);margin-bottom:12px}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;border-left:4px solid var(--blue);box-shadow:var(--shadow);transition:transform .12s}
+  .kpi:hover{transform:translateY(-2px)}
+  .kpi.red{border-left-color:var(--red)}.kpi.amber{border-left-color:var(--gold)}.kpi.green{border-left-color:var(--green)}.kpi.purple{border-left-color:var(--purple)}
+  .kpi-val{font-size:22px;font-weight:700;color:var(--text);line-height:1.1}
+  .kpi-lbl{font-size:11px;color:var(--text2);margin-top:4px}
+
+  .insight{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;border-left:4px solid var(--blue);background:#EBF5FB;color:#1A5276;line-height:1.7}
+  @media(prefers-color-scheme:dark){.insight{background:#0C1A2E;color:#7DD3FC}}
+
+  .cw{position:relative;width:100%}
+  .h160{height:160px}.h200{height:200px}.h220{height:220px}.h260{height:260px}.h300{height:300px}.h340{height:340px}.h380{height:380px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+  .legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0}
+
+  .hbar-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+  .hbar-row:last-child{border-bottom:none}
+  .hbar-lbl{flex:0 0 150px;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hbar-track{flex:1;height:12px;background:var(--bg);border-radius:3px;overflow:hidden}
+  .hbar-fill{height:100%;border-radius:3px;transition:width .4s}
+  .hbar-val{flex:0 0 52px;text-align:right;font-size:11px;font-weight:600;color:var(--text)}
+
+  .risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+  .risk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-left:4px solid}
+  .risk-val{font-size:20px;font-weight:700;color:var(--text)}
+  .risk-lbl{font-size:11px;color:var(--text2);margin-top:3px}
+  .risk-sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+  .heat-wrap{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin:10px 0 6px}
+  .heat-cell{height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:default;transition:opacity .15s}
+  .heat-cell:hover{opacity:0.8}
+
+  .heatmap-table{width:100%;border-collapse:collapse;font-size:11px}
+  .heatmap-table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);border-bottom:2px solid var(--border)}
+  .heatmap-table td{padding:5px 6px;border-bottom:1px solid var(--border)}
+  .hm-cell{border-radius:5px;padding:4px 8px;text-align:center;font-size:11px;font-weight:600;display:block}
+
+  .footer{background:var(--navy);color:rgba(255,255,255,0.5);text-align:center;padding:24px;font-size:11px;margin-top:40px}
+  .footer a{color:rgba(255,255,255,0.75);text-decoration:none}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h4"/></svg>
+      </div>
+      <div>
+        <div class="header-title">Credit Card Fraud Intelligence Dashboard</div>
+        <div class="header-sub">500,000 transactions &nbsp;|&nbsp; Jan 2024 – Sep 2025 &nbsp;|&nbsp; 8 countries &nbsp;|&nbsp; Finance Portfolio Project</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge">500K Transactions</span>
+      <span class="badge">7,500 Fraud Cases</span>
+      <span class="badge">1.50% Fraud Rate</span>
+      <span class="badge">$1.09M Fraud Value</span>
+    </div>
+  </div>
+</div>
+
+<div class="nav-bar">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="showPage('p1',this)">&#9632; Overview</button>
+    <button class="nav-btn" onclick="showPage('p2',this)">&#9632; Geography</button>
+    <button class="nav-btn" onclick="showPage('p3',this)">&#9632; Transaction Patterns</button>
+    <button class="nav-btn" onclick="showPage('p4',this)">&#9632; Risk Factors</button>
+    <button class="nav-btn" onclick="showPage('p5',this)">&#9632; Merchant Intelligence</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val">500,000</div><div class="kpi-lbl">Total transactions</div></div>
+    <div class="kpi red"><div class="kpi-val">7,500</div><div class="kpi-lbl">Fraud cases detected</div></div>
+    <div class="kpi red"><div class="kpi-val">1.50%</div><div class="kpi-lbl">Overall fraud rate</div></div>
+    <div class="kpi amber"><div class="kpi-val">$72.6M</div><div class="kpi-lbl">Total transaction value</div></div>
+    <div class="kpi amber"><div class="kpi-val">$1.09M</div><div class="kpi-lbl">Total fraud value</div></div>
+    <div class="kpi purple"><div class="kpi-val">89,644</div><div class="kpi-lbl">Unique customers</div></div>
+    <div class="kpi"><div class="kpi-val">8,999</div><div class="kpi-lbl">Unique merchants</div></div>
+    <div class="kpi"><div class="kpi-val">$145.10</div><div class="kpi-lbl">Avg fraud transaction</div></div>
+  </div>
+  <div class="insight">Key finding: Fraud is perfectly channel-agnostic — ATM, Online and POS all register exactly 1.50%. This indicates a sophisticated, distributed attack operating across all channels simultaneously rather than exploiting a single vulnerability.</div>
+  <div class="card full mb16">
+    <div class="card-title">Monthly fraud trend — count & rate (Jan 2024 – Sep 2025)</div>
+    <div class="legend"><span><i style="background:#378ADD"></i>Monthly fraud count</span><span><i style="background:#E24B4A"></i>Fraud rate %</span></div>
+    <div class="cw h260"><canvas id="c1m"></canvas></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Quarterly fraud volume — 2024 Q1 to 2025 Q3</div>
+      <div class="cw h220"><canvas id="c1q"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fraud vs legitimate transaction value</div>
+      <div class="legend"><span><i style="background:#E24B4A"></i>Fraud ($1.09M — 1.5%)</span><span><i style="background:#378ADD"></i>Legitimate ($71.5M — 98.5%)</span></div>
+      <div class="cw h220"><canvas id="c1s"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+  <div class="kpi-grid">
+    <div class="kpi red"><div class="kpi-val">Germany</div><div class="kpi-lbl">Highest fraud rate — 1.596%</div></div>
+    <div class="kpi green"><div class="kpi-val">Canada</div><div class="kpi-lbl">Lowest fraud rate — 1.416%</div></div>
+    <div class="kpi amber"><div class="kpi-val">12.7%</div><div class="kpi-lbl">Relative gap — Germany vs Canada</div></div>
+    <div class="kpi"><div class="kpi-val">Germany Platinum</div><div class="kpi-lbl">Highest risk combo — 1.712%</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Fraud rate by country (%)</div>
+      <div class="cw h300"><canvas id="c2r"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total fraud cases by country</div>
+      <div class="cw h300"><canvas id="c2c"></canvas></div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card">
+      <div class="card-title">Fraud value by country ($)</div>
+      <div class="cw h260"><canvas id="c2v"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 10 riskiest country + card type combinations</div>
+      <div id="c2combo" style="margin-top:4px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+  <div class="kpi-grid">
+    <div class="kpi red"><div class="kpi-val">05:00</div><div class="kpi-lbl">Peak fraud hour — 1.674%</div></div>
+    <div class="kpi amber"><div class="kpi-val">Wednesday</div><div class="kpi-lbl">Highest fraud day — 1.557%</div></div>
+    <div class="kpi red"><div class="kpi-val">2.04%</div><div class="kpi-lbl">Fraud rate — $1,000+ transactions</div></div>
+    <div class="kpi green"><div class="kpi-val">Monday</div><div class="kpi-lbl">Lowest fraud day — 1.435%</div></div>
+  </div>
+  <div class="card full mb16">
+    <div class="card-title">Fraud rate heatmap by hour of day — 24-hour view</div>
+    <div class="heat-wrap" id="heatmap"></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:8px"><span>Midnight</span><span>06:00</span><span>Noon</span><span>18:00</span><span>23:00</span></div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+      <span>Lower risk</span>
+      <div style="display:flex;gap:2px">${['#EAF3DE','#97C459','#639922','#BA7517','#E24B4A'].map(c=>`<div style="width:20px;height:12px;border-radius:2px;background:${c}"></div>`).join('')}</div>
+      <span>Higher risk</span>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Fraud rate by day of week (%)</div>
+      <div class="cw h220"><canvas id="c3dow"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fraud rate by transaction amount bucket</div>
+      <div class="cw h220"><canvas id="c3amt"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="p4">
+  <div class="insight" style="border-left-color:#E24B4A;background:#FCEBEB;color:#791F1F">Counter-intuitive finding: Chip + PIN transactions show a 1.588% fraud rate — the highest of all security combinations, higher than no chip/no PIN at 1.505%. This strongly suggests card-present skimming at chip terminals, not card-not-present fraud. A critical finding for fraud prevention strategy.</div>
+  <div class="risk-grid">
+    <div class="risk-card" style="border-left-color:#E24B4A"><div class="risk-val">1.588%</div><div class="risk-lbl">Chip + PIN fraud rate</div><div class="risk-sub">Counterintuitively the highest security combo</div></div>
+    <div class="risk-card" style="border-left-color:#378ADD"><div class="risk-val">1.505%</div><div class="risk-lbl">No chip + no PIN rate</div><div class="risk-sub">Most common — 56% of all transactions</div></div>
+    <div class="risk-card" style="border-left-color:#BA7517"><div class="risk-val">1.531%</div><div class="risk-lbl">Terminal device rate</div><div class="risk-sub">Highest across all device types</div></div>
+    <div class="risk-card" style="border-left-color:#3B6D11"><div class="risk-val">1.440%</div><div class="risk-lbl">Web device rate</div><div class="risk-sub">Lowest across all device types</div></div>
+    <div class="risk-card" style="border-left-color:#E24B4A"><div class="risk-val">1.530%</div><div class="risk-lbl">Credit card rate</div><div class="risk-sub">Highest across card types</div></div>
+    <div class="risk-card" style="border-left-color:#3B6D11"><div class="risk-val">1.311%</div><div class="risk-lbl">20km+ distance rate</div><div class="risk-sub">Further from home = lower fraud rate</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Fraud rate by security feature combination (%)</div>
+      <div class="cw h200"><canvas id="c4sec"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fraud rate by device type (%)</div>
+      <div class="cw h200"><canvas id="c4dev"></canvas></div>
+    </div>
+  </div>
+  <div class="grid3" style="margin-top:16px">
+    <div class="card">
+      <div class="card-title">Fraud rate by card type (%)</div>
+      <div class="cw h200"><canvas id="c4card"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fraud rate by transaction type</div>
+      <div class="cw h200"><canvas id="c4txn"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fraud rate by distance from home</div>
+      <div class="cw h200"><canvas id="c4dist"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page" id="p5">
+  <div class="kpi-grid">
+    <div class="kpi red"><div class="kpi-val">Travel</div><div class="kpi-lbl">Highest fraud rate category — 1.558%</div></div>
+    <div class="kpi green"><div class="kpi-val">Clothing</div><div class="kpi-lbl">Lowest fraud rate category — 1.434%</div></div>
+    <div class="kpi amber"><div class="kpi-val">9.84%</div><div class="kpi-lbl">Top single merchant fraud rate</div></div>
+    <div class="kpi red"><div class="kpi-val">Groceries ATM</div><div class="kpi-lbl">Highest category + channel — 1.747%</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Fraud rate by merchant category (%)</div>
+      <div class="cw h300"><canvas id="c5rate"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total fraud value by merchant category ($)</div>
+      <div class="cw h300"><canvas id="c5val"></canvas></div>
+    </div>
+  </div>
+  <div class="card full" style="margin-top:16px">
+    <div class="card-title">Category x transaction type fraud rate heatmap — colour intensity = risk level</div>
+    <div style="overflow-x:auto;margin-top:8px"><table class="heatmap-table" id="c5hm"></table></div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p><strong>Credit Card Fraud Intelligence Dashboard</strong> &nbsp;|&nbsp; Data Analytics Portfolio Project &nbsp;|&nbsp; Jan 2024 – Sep 2025</p>
+  <p style="margin-top:6px">Built with HTML5, Chart.js &amp; JavaScript &nbsp;&bull;&nbsp; Tools: Tableau &bull; MySQL &bull; Python &bull; Excel &nbsp;&bull;&nbsp; Dataset: <a href="https://www.kaggle.com" target="_blank">Kaggle</a></p>
+</div>
+
+<script>
+const TX='#566573',GC='rgba(0,0,0,0.05)';
+Chart.defaults.font.family='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+Chart.defaults.font.size=11;Chart.defaults.color=TX;
+
+function mk(id,type,labels,datasets,opts){
+  const el=document.getElementById(id);if(!el)return;
+  return new Chart(el,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},layout:{padding:4},...opts}});
+}
+
+const MONTHS=['Jan 24','Feb 24','Mar 24','Apr 24','May 24','Jun 24','Jul 24','Aug 24','Sep 24','Oct 24','Nov 24','Dec 24','Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25'];
+const FC=[348,300,376,338,391,380,383,382,376,363,354,387,362,306,347,336,360,372,341,362,336];
+const FR=[1.434,1.324,1.545,1.443,1.601,1.610,1.569,1.562,1.596,1.477,1.511,1.592,1.506,1.410,1.420,1.446,1.482,1.571,1.412,1.495,1.473];
+
+mk('c1m','bar',MONTHS,[
+  {label:'Fraud count',data:FC,backgroundColor:'#378ADD',borderRadius:2,yAxisID:'y'},
+  {type:'line',label:'Fraud rate',data:FR,borderColor:'#E24B4A',backgroundColor:'transparent',pointBackgroundColor:'#E24B4A',pointRadius:3,tension:.35,yAxisID:'y1'}
+],{scales:{x:{ticks:{color:TX,autoSkip:false,maxRotation:45,font:{size:10}},grid:{color:GC}},y:{ticks:{color:TX},grid:{color:GC},title:{display:true,text:'Fraud count',color:TX,font:{size:10}}},y1:{type:'linear',position:'right',ticks:{color:'#E24B4A',callback:v=>v.toFixed(2)+'%'},grid:{display:false},title:{display:true,text:'Rate %',color:'#E24B4A',font:{size:10}}}}});
+
+mk('c1q','bar',['Q1 2024','Q2 2024','Q3 2024','Q4 2024','Q1 2025','Q2 2025','Q3 2025'],
+  [{data:[1024,1109,1141,1104,1015,1068,1039],backgroundColor:['#378ADD','#378ADD','#E24B4A','#378ADD','#378ADD','#378ADD','#378ADD'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{color:TX},grid:{color:GC}}}}
+);
+mk('c1s','doughnut',['Fraud','Legitimate'],[{data:[1088219,71545788],backgroundColor:['#E24B4A','#378ADD'],borderWidth:2,borderColor:'#fff'}],{plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:10}}}});
+
+const CTRS=['Germany','UK','India','Singapore','Australia','France','USA','Canada'];
+const CR=[1.596,1.558,1.554,1.501,1.485,1.472,1.418,1.416];
+const CC=[996,978,969,935,929,922,883,888];
+const CV=[140298,140834,139300,143694,135626,136584,129042,122841];
+const CCOL=CR.map(r=>r>=1.55?'#E24B4A':r>=1.48?'#BA7517':'#378ADD');
+
+mk('c2r','bar',CTRS,[{data:CR,backgroundColor:CCOL,borderRadius:4}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{min:1.38,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}});
+mk('c2c','bar',CTRS,[{data:CC,backgroundColor:CCOL,borderRadius:4}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{color:TX},grid:{color:GC}}}});
+mk('c2v','bar',CTRS,[{data:CV,backgroundColor:CCOL,borderRadius:4}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',color:TX},grid:{color:GC}}}});
+
+const combos=[{l:'Germany — Platinum',v:1.712},{l:'India — Platinum',v:1.656},{l:'Germany — Credit',v:1.652},{l:'India — Debit',v:1.628},{l:'UK — Credit',v:1.624},{l:'UK — Platinum',v:1.621},{l:'Australia — Credit',v:1.583},{l:'Singapore — Credit',v:1.576},{l:'France — Debit',v:1.551},{l:'USA — Debit',v:1.547}];
+document.getElementById('c2combo').innerHTML=combos.map(c=>`<div class="hbar-row"><div class="hbar-lbl">${c.l}</div><div class="hbar-track"><div class="hbar-fill" style="width:${(c.v/1.712*100).toFixed(1)}%;background:#E24B4A"></div></div><div class="hbar-val">${c.v.toFixed(3)}%</div></div>`).join('');
+
+const HR=[1.670,1.581,1.487,1.499,1.304,1.674,1.447,1.506,1.362,1.490,1.531,1.662,1.556,1.386,1.591,1.579,1.485,1.416,1.443,1.544,1.384,1.386,1.482,1.537];
+const minR=Math.min(...HR),maxR=Math.max(...HR);
+function hColor(r){const t=(r-minR)/(maxR-minR);if(t<0.2)return{bg:'#EAF3DE',tx:'#27500A'};if(t<0.4)return{bg:'#97C459',tx:'#173404'};if(t<0.6)return{bg:'#639922',tx:'#EAF3DE'};if(t<0.8)return{bg:'#BA7517',tx:'#FAEEDA'};return{bg:'#E24B4A',tx:'#FCEBEB'};}
+const hg=document.getElementById('heatmap');
+HR.forEach((r,h)=>{const c=hColor(r);const d=document.createElement('div');d.className='heat-cell';d.style.background=c.bg;d.style.color=c.tx;d.textContent=h.toString().padStart(2,'0');d.title=`${h.toString().padStart(2,'0')}:00 — Fraud rate: ${r.toFixed(3)}%`;hg.appendChild(d);});
+
+mk('c3dow','bar',['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+  [{data:[1.435,1.487,1.557,1.482,1.503,1.521,1.518],backgroundColor:['#378ADD','#378ADD','#E24B4A','#378ADD','#378ADD','#BA7517','#BA7517'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{min:1.38,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c3amt','bar',['$0-25','$25-50','$50-100','$100-200','$200-500','$500-1K','$1K+'],
+  [{data:[1.510,1.521,1.524,1.493,1.441,1.739,2.041],backgroundColor:['#378ADD','#378ADD','#378ADD','#378ADD','#3B6D11','#E24B4A','#E24B4A'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX,maxRotation:30},grid:{display:false}},y:{min:1.38,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}}
+);
+
+mk('c4sec','bar',['No Chip + No PIN','No Chip + PIN','Chip + No PIN','Chip + PIN'],
+  [{data:[1.505,1.474,1.482,1.588],backgroundColor:['#378ADD','#3B6D11','#378ADD','#E24B4A'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX,maxRotation:20,font:{size:10}},grid:{display:false}},y:{min:1.43,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c4dev','bar',['Mobile','Terminal','Web'],
+  [{data:[1.524,1.531,1.440],backgroundColor:['#BA7517','#E24B4A','#378ADD'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{min:1.40,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c4card','bar',['Credit','Debit','Platinum','Gold'],
+  [{data:[1.530,1.510,1.504,1.455],backgroundColor:['#E24B4A','#BA7517','#378ADD','#378ADD'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{min:1.40,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c4txn','bar',['ATM','POS','Online'],
+  [{data:[1.503,1.500,1.497],backgroundColor:['#E24B4A','#BA7517','#378ADD'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{min:1.480,ticks:{callback:v=>v.toFixed(3)+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c4dist','bar',['< 1 km','1–3 km','3–5 km','5–10 km','10–20 km','20 km+'],
+  [{data:[1.491,1.510,1.496,1.529,1.464,1.311],backgroundColor:['#378ADD','#378ADD','#378ADD','#BA7517','#378ADD','#3B6D11'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX,maxRotation:30},grid:{display:false}},y:{min:1.25,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}}}}
+);
+
+const CATS=['Travel','Online Svcs','Groceries','Entertainment','Health','Utilities','Fuel','Electronics','Food','Clothing'];
+const CRATES=[1.558,1.557,1.552,1.521,1.516,1.485,1.469,1.468,1.444,1.434];
+const CVALS=[108013,113839,120712,110056,111203,105385,106176,109699,104864,98272];
+const CCOLS=CRATES.map(r=>r>=1.54?'#E24B4A':r>=1.49?'#BA7517':'#378ADD');
+mk('c5rate','bar',CATS,[{data:CRATES,backgroundColor:CCOLS,borderRadius:3}],{indexAxis:'y',scales:{x:{min:1.40,ticks:{callback:v=>v.toFixed(2)+'%',color:TX},grid:{color:GC}},y:{ticks:{color:TX,font:{size:11}},grid:{display:false}}}});
+mk('c5val','bar',CATS,[{data:CVALS,backgroundColor:CCOLS,borderRadius:3}],{indexAxis:'y',scales:{x:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',color:TX},grid:{color:GC}},y:{ticks:{color:TX,font:{size:11}},grid:{display:false}}}});
+
+const hmData={
+  'Travel':{ATM:1.593,POS:1.551,Online:1.528},
+  'Online Svcs':{ATM:1.530,POS:1.726,Online:1.546},
+  'Groceries':{ATM:1.747,POS:1.395,Online:1.517},
+  'Entertainment':{ATM:1.438,POS:1.468,Online:1.652},
+  'Health':{ATM:1.495,POS:1.451,Online:1.601},
+  'Utilities':{ATM:1.552,POS:1.460,Online:1.449},
+  'Fuel':{ATM:1.459,POS:1.481,Online:1.527},
+  'Electronics':{ATM:1.544,POS:1.407,Online:1.453},
+  'Food':{ATM:1.404,POS:1.532,Online:1.397},
+  'Clothing':{ATM:1.400,POS:1.436,Online:1.465}
+};
+function hmColor(v){
+  if(v>=1.70)return{bg:'#E24B4A',tx:'#FCEBEB'};
+  if(v>=1.60)return{bg:'#BA7517',tx:'#FAEEDA'};
+  if(v>=1.55)return{bg:'#EF9F27',tx:'#412402'};
+  if(v>=1.50)return{bg:'#FAC775',tx:'#633806'};
+  return{bg:'#EAF3DE',tx:'#27500A'};
+}
+const tbl=document.getElementById('c5hm');
+tbl.innerHTML=`<tr><th>Category</th><th style="text-align:center">ATM</th><th style="text-align:center">POS</th><th style="text-align:center">Online</th></tr>`+
+Object.entries(hmData).map(([cat,d])=>`<tr><td style="padding:6px 10px;font-size:12px;color:var(--text2)">${cat}</td>`+['ATM','POS','Online'].map(t=>{const c=hmColor(d[t]);return`<td style="padding:4px"><span class="hm-cell" style="background:${c.bg};color:${c.tx}">${d[t].toFixed(3)}%</span></td>`;}).join('')+'</tr>').join('');
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+}
+</script>
+</body>
+</html>
