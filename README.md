@@ -66,7 +66,7 @@ intelligence page with a category x channel heatmap table.
 
 ## Tools Used
 
-Tableau · MySQL · Excel · Python · HTML · CSS · JavaScript
+Tableau · MySQL · Excel
 
 ---
 
